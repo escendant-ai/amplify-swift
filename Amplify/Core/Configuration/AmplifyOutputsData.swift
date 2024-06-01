@@ -176,6 +176,7 @@ public struct AmplifyOutputsData: Codable {
     public struct Storage: Codable {
         public let awsRegion: AWSRegion
         public let bucketName: String
+        public let sharedContainerIdentifier: String?
     }
 
     @_spi(InternalAmplifyConfiguration)

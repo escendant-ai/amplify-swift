@@ -41,7 +41,8 @@ extension AWSS3StoragePlugin {
             let storageService = try AWSS3StorageService(authService: authService,
                                                          region: configClosures.retrieveRegion(),
                                                          bucket: configClosures.retrieveBucket(),
-                                                         httpClientEngineProxy: self.httpClientEngineProxy)
+                                                         httpClientEngineProxy: self.httpClientEngineProxy,
+                                                         storageConfiguration: .init(sharedContainerIdentifier: configClosures.retrieveSharedContainerIdentifier() ?? StorageConfiguration.Defaults.sharedContainerIdentifier))
             storageService.urlRequestDelegate = self.urlRequestDelegate
 
             configure(storageService: storageService, 
@@ -87,6 +88,7 @@ extension AWSS3StoragePlugin {
         let retrieveRegion: () throws -> String
         let retrieveBucket: () throws -> String
         let retrieveDefaultAccessLevel: () throws -> StorageAccessLevel
+        let retrieveSharedContainerIdentifier: () -> String?
     }
 
     private func retrieveConfiguration(_ configuration: AmplifyOutputsData) throws -> ConfigurationClosures {
@@ -108,7 +110,8 @@ extension AWSS3StoragePlugin {
 
         return ConfigurationClosures(retrieveRegion: regionClosure,
                                      retrieveBucket: bucketClosure,
-                                     retrieveDefaultAccessLevel: { .guest })
+                                     retrieveDefaultAccessLevel: { .guest }, 
+                                     retrieveSharedContainerIdentifier: { storage.sharedContainerIdentifier })
     }
 
     private func retrieveConfiguration(_ configuration: JSONValue) throws -> ConfigurationClosures {
@@ -121,10 +124,12 @@ extension AWSS3StoragePlugin {
         let regionClosure = { try AWSS3StoragePlugin.getRegion(configObject) }
         let bucketClosure = { try AWSS3StoragePlugin.getBucket(configObject) }
         let defaultAccessLevelClosure = { try AWSS3StoragePlugin.getDefaultAccessLevel(configObject) }
+        let sharedContainerIdentifierClosure = { AWSS3StoragePlugin.getSharedContainerIdentifier(configObject) }
 
         return ConfigurationClosures(retrieveRegion: regionClosure,
                                      retrieveBucket: bucketClosure,
-                                     retrieveDefaultAccessLevel: defaultAccessLevelClosure)
+                                     retrieveDefaultAccessLevel: defaultAccessLevelClosure,
+                                     retrieveSharedContainerIdentifier: sharedContainerIdentifierClosure)
     }
 
     /// Retrieves the region from configuration, validates, and returns it.
@@ -196,5 +201,13 @@ extension AWSS3StoragePlugin {
         }
 
         return .guest
+    }
+    
+    /// Retrieves the sharedContainerIdentifier from configuration, and returns it.
+    private static func getSharedContainerIdentifier(_ configuration: [String: JSONValue]) -> String? {
+        if let sharedContainerIdentifier = configuration[PluginConstants.sharedContainerIdentifier], case let .string(sharedContainerIdentifierValue) = sharedContainerIdentifier {
+            return sharedContainerIdentifierValue
+        }
+        return nil
     }
 }

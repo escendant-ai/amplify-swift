@@ -11,4 +11,5 @@ struct PluginConstants {
     static let bucket = "bucket"
     static let region = "region"
     static let defaultAccessLevel = "defaultAccessLevel"
+    static let sharedContainerIdentifier = "sharedContainerIdentifier"
 }
